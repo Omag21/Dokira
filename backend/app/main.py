@@ -14,14 +14,14 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # Configure les templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 # Inclut les routeurs
 app.include_router(views_router)  # Pour les pages HTML
 app.include_router(api_router, prefix="/api")  
 
 # Monte le dossier static pour servir CSS, JS, images
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
