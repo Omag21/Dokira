@@ -20,6 +20,40 @@ class GroupeSanguin(str, enum.Enum):
     O_POSITIF = "O+"
     O_NEGATIF = "O-"
 
+class Specialite(str, enum.Enum):
+    GENERALISTE = "Généraliste"
+    CARDIOLOGUE = "Cardiologue"
+    PEDIATRE = "Pédiatre"
+    DERMATOLOGUE = "Dermatologue"
+    OPHTALMOLOGUE = "Ophtalmologue"
+    GYNECOLOGUE = "Gynécologue"
+    NEUROLOGUE = "Neurologue"
+    PSYCHIATRE = "Psychiatre"
+    AUTRE = "Autre"
+
+class TypeConsultation(str, enum.Enum):
+    CABINET = "Cabinet"
+    VIDEO = "Vidéo"
+    DOMICILE = "Domicile"
+
+class StatutDossier(str, enum.Enum):
+    A_TRAITER = "À traiter"
+    EN_COURS = "En cours de traitement"
+    TRAITE = "Traité"
+    ARCHIVE = "Archivé"
+
+class StatutMessage(str, enum.Enum):
+    ENVOYE = "Envoyé"
+    LU = "Lu"
+    REPONDU = "Répondu"
+    ARCHIVE = "Archivé"
+
+class StatutRendezVous(str, enum.Enum):
+    PLANIFIE = "Planifié"
+    CONFIRME = "Confirmé"
+    ANNULE = "Annulé"
+    TERMINE = "Terminé"
+
 class Patient(Base):
     __tablename__ = "patients"
     
@@ -83,8 +117,8 @@ class Patient(Base):
     notifications_email = Column(Boolean, default=True)
     notifications_sms = Column(Boolean, default=True)
     
-    # Relations (à développer selon vos besoins)
-    # rendez_vous = relationship("RendezVous", back_populates="patient")
+
+    rendez_vous = relationship("RendezVous", back_populates="patient")
     # ordonnances = relationship("Ordonnance", back_populates="patient")
     # documents = relationship("Document", back_populates="patient")
     
@@ -115,11 +149,16 @@ class RendezVous(Base):
     specialite = Column(String(100), nullable=False)
     date_heure = Column(DateTime, nullable=False)
     motif = Column(Text, nullable=True)
-    statut = Column(String(50), default="Planifié")  # Planifié, Confirmé, Annulé, Terminé
+    statut = Column(Enum(StatutRendezVous), default=StatutRendezVous.PLANIFIE)
     lieu = Column(String(255), nullable=True)
     date_creation = Column(DateTime, default=datetime.utcnow)
+
+    # Nouveaux champs pour le médecin
+    medecin_id = Column(Integer, ForeignKey("medecins.id"), nullable=True)
+    type_consultation = Column(Enum(TypeConsultation), default=TypeConsultation.CABINET)
     
-    # patient = relationship("Patient", back_populates="rendez_vous")
+    patient = relationship("Patient", back_populates="rendez_vous")
+    medecin = relationship("Medecin", back_populates="rendez_vous")
 
 
 class Document(Base):
@@ -152,3 +191,83 @@ class Ordonnance(Base):
     fichier_url = Column(String(500), nullable=True)
     
     # patient = relationship("Patient", back_populates="ordonnances")
+
+
+class Medecin(Base):
+    __tablename__ = "medecins"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    mot_de_passe_hash = Column(String(255), nullable=False)
+    nom = Column(String(100), nullable=False)
+    prenom = Column(String(100), nullable=False)
+    specialite = Column(Enum(Specialite), nullable=False)
+    numero_ordre = Column(String(50), unique=True, nullable=True)
+    telephone = Column(String(20), nullable=True)
+    
+    # Adresse Cabinet
+    adresse = Column(String(255), nullable=True)
+    ville = Column(String(100), nullable=True)
+    code_postal = Column(String(10), nullable=True)
+    
+    # Infos Profil
+    photo_profil_url = Column(String(500), nullable=True)
+    langues = Column(String(255), nullable=True) # "Français,Anglais"
+    biographie = Column(Text, nullable=True)
+    
+    # Statut
+    est_actif = Column(Boolean, default=True)
+    date_creation = Column(DateTime, default=datetime.utcnow)
+    derniere_connexion = Column(DateTime, nullable=True)
+    
+    # Relations
+    rendez_vous = relationship("RendezVous", back_populates="medecin")
+    dossiers = relationship("DossierMedical", back_populates="medecin")
+    messages = relationship("Message", back_populates="medecin")
+
+    @property
+    def nom_complet(self):
+        return f"Dr. {self.prenom} {self.nom}"
+        
+    @property
+    def langues_liste(self):
+        if self.langues:
+            return [l.strip() for l in self.langues.split(",")]
+        return []
+
+class DossierMedical(Base):
+    __tablename__ = "dossiers_medicaux"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    medecin_id = Column(Integer, ForeignKey("medecins.id"), nullable=False)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    
+    date_consultation = Column(DateTime, default=datetime.utcnow)
+    motif_consultation = Column(String(255), nullable=True)
+    diagnostic = Column(Text, nullable=True)
+    traitement = Column(Text, nullable=True)
+    observations = Column(Text, nullable=True)
+    
+    statut_traitement = Column(Enum(StatutDossier), default=StatutDossier.A_TRAITER)
+    date_creation = Column(DateTime, default=datetime.utcnow)
+    date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    patient = relationship("Patient", backref="dossiers")
+    medecin = relationship("Medecin", back_populates="dossiers")
+
+class Message(Base):
+    __tablename__ = "messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    medecin_id = Column(Integer, ForeignKey("medecins.id"), nullable=False)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    
+    sujet = Column(String(255), nullable=False)
+    contenu = Column(Text, nullable=False)
+    de_medecin = Column(Boolean, default=True) # True si envoyé par médecin, False si par patient
+    
+    statut = Column(Enum(StatutMessage), default=StatutMessage.ENVOYE)
+    date_envoi = Column(DateTime, default=datetime.utcnow)
+    
+    patient = relationship("Patient", backref="messages")
+    medecin = relationship("Medecin", back_populates="messages")

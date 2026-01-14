@@ -3,10 +3,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
-from app.database import Base, engine, get_db
-from app.views import router as views_router
-from app.urls import router as api_router
-import app.models
+
+# Imports relatifs (ajoutez un point devant)
+from .database import Base, engine, get_db
+from .views import router as views_router
+from .urls import router as api_router
+from . import models  # ou import .models
 
 # Crée toutes les tables dans la base de données
 Base.metadata.create_all(bind=engine)

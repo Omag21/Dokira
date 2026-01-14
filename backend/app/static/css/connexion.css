@@ -348,3 +348,155 @@
             margin-top: 5px;
             display: none;
         }
+/* ===== STYLES POUR LES STATUTS ===== */
+
+.status-container {
+    margin-bottom: 25px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.status-option {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.status-option:last-child {
+    margin-bottom: 0;
+}
+
+.status-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.1);
+}
+
+.status-option.active {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(10, 82, 255, 0.05) 0%, rgba(10, 82, 255, 0.02) 100%);
+}
+
+.status-option.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--primary);
+    border-radius: 4px 0 0 4px;
+}
+
+.status-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.status-option[data-user-type="patient"] .status-icon {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+}
+
+.status-option[data-user-type="medecin"] .status-icon {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.status-option.active[data-user-type="patient"] .status-icon {
+    box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2);
+}
+
+.status-option.active[data-user-type="medecin"] .status-icon {
+    box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.2);
+}
+
+.status-info {
+    flex: 1;
+}
+
+.status-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+    margin-bottom: 3px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.status-email {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    font-family: 'Roboto', sans-serif;
+}
+
+.status-indicator {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.status-option.active .status-indicator {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Animation de sélection */
+@keyframes pulseSelect {
+    0% {
+        box-shadow: 0 0 0 0 rgba(10, 82, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(10, 82, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(10, 82, 255, 0);
+    }
+}
+
+.status-option.active {
+    animation: pulseSelect 0.6s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .status-container {
+        padding: 12px;
+    }
+    
+    .status-option {
+        padding: 10px 12px;
+    }
+    
+    .status-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        margin-right: 12px;
+    }
+    
+    .status-title {
+        font-size: 0.95rem;
+    }
+    
+    .status-email {
+        font-size: 0.8rem;
+    }
+}

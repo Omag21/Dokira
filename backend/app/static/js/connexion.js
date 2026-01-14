@@ -2,6 +2,74 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     
+    // ===== FONCTIONNALITÉ DES STATUTS =====
+    
+    const statusOptions = document.querySelectorAll('.status-option');
+    const emailInput = document.getElementById('email');
+    const patientEmail = "votre.email@exemple.com";
+    const medecinEmail = "professionnel.sante@exemple.com";
+    
+    // Fonction pour mettre à jour le statut actif
+    function setActiveStatus(selectedOption) {
+        // Retire la classe active de tous
+        statusOptions.forEach(option => {
+            option.classList.remove('active');
+            option.style.transform = 'translateY(0)';
+        });
+        
+        // Ajoute la classe active à l'élément sélectionné
+        selectedOption.classList.add('active');
+        selectedOption.style.transform = 'translateY(-2px)';
+        
+        // Met à jour l'email dans le champ
+        const userType = selectedOption.getAttribute('data-user-type');
+        if (userType === 'patient') {
+            emailInput.value = patientEmail;
+            emailInput.placeholder = patientEmail;
+        } else if (userType === 'medecin') {
+            emailInput.value = medecinEmail;
+            emailInput.placeholder = medecinEmail;
+        }
+        
+        // Animation de feedback
+        const icon = selectedOption.querySelector('.status-icon');
+        icon.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            icon.style.transform = 'scale(1)';
+        }, 200);
+        
+        // Log pour debug
+        console.log(`Statut sélectionné: ${userType}`);
+    }
+    
+    // Ajoute les événements de clic aux statuts
+    if (statusOptions.length > 0) {
+        statusOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                setActiveStatus(this);
+            });
+            
+            // Animation au survol
+            option.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('active')) {
+                    this.style.transform = 'translateY(-2px)';
+                }
+            });
+            
+            option.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('active')) {
+                    this.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        // Initialisation: sélectionne le patient par défaut
+        const defaultOption = document.querySelector('.status-option[data-user-type="patient"]');
+        if (defaultOption) {
+            setActiveStatus(defaultOption);
+        }
+    }
+    
     // ========== GESTION DES MOTS DE PASSE (VISIBILITÉ) ==========
     
     // Toggle pour le mot de passe de connexion
@@ -43,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
     
     // ========== VALIDATION DU FORMULAIRE D'INSCRIPTION ==========
     
@@ -183,7 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    
     // ========== VALIDATION DU FORMULAIRE DE CONNEXION ==========
     
     const loginForm = document.getElementById('loginForm');
@@ -218,11 +284,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connexion...';
+                    
+                    // Ajouter un effet sur le statut sélectionné
+                    const activeStatus = document.querySelector('.status-option.active');
+                    if (activeStatus) {
+                        const userType = activeStatus.getAttribute('data-user-type');
+                        console.log(`Tentative de connexion en tant que: ${userType}`);
+                        
+                        // Animation de chargement sur le statut
+                        activeStatus.style.opacity = '0.8';
+                        setTimeout(() => {
+                            activeStatus.style.opacity = '1';
+                        }, 1000);
+                    }
                 }
             }
         });
     }
-    
     
     // ========== ANIMATION DES CHAMPS ==========
     
@@ -243,9 +321,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.value === '') {
                 this.parentElement.classList.remove('focused');
             }
+            
+            // Vérifier si l'email correspond à un statut
+            if (this.id === 'email' && statusOptions.length > 0) {
+                const currentEmail = this.value.trim();
+                if (currentEmail === patientEmail) {
+                    const patientOption = document.querySelector('.status-option[data-user-type="patient"]');
+                    if (patientOption) setActiveStatus(patientOption);
+                } else if (currentEmail === medecinEmail) {
+                    const medecinOption = document.querySelector('.status-option[data-user-type="medecin"]');
+                    if (medecinOption) setActiveStatus(medecinOption);
+                }
+            }
         });
     });
-    
     
     // ========== EFFETS VISUELS ==========
     
@@ -262,6 +351,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
     
+    // Animation d'entrée pour les statuts (si présents)
+    if (statusOptions.length > 0) {
+        const statusContainer = document.querySelector('.status-container');
+        if (statusContainer) {
+            setTimeout(() => {
+                statusContainer.style.opacity = '1';
+                statusContainer.style.transform = 'translateY(0)';
+            }, 300);
+        }
+    }
     
     // ========== AUTO-FERMETURE DES ALERTES ==========
     
@@ -275,7 +374,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         }, 5000);
     });
-    
     
     // ========== VALIDATION EN TEMPS RÉEL ==========
     
@@ -306,4 +404,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // ========== GESTION DES STATUTS DANS L'INSCRIPTION ==========
+    
+    // Si vous avez un formulaire d'inscription avec sélection de statut
+    const userTypeSelect = document.getElementById('user_type');
+    if (userTypeSelect) {
+        userTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Mettre à jour les statuts visuels
+            statusOptions.forEach(option => {
+                option.classList.remove('active');
+                const optionType = option.getAttribute('data-user-type');
+                if (optionType === selectedType) {
+                    option.classList.add('active');
+                }
+            });
+        });
+    }
+    
+    // ========== FONCTIONNALITÉ AVANCÉE POUR LES STATUTS ==========
+    
+    // Sauvegarde du statut dans localStorage
+    if (statusOptions.length > 0) {
+        // Charger le dernier statut sélectionné
+        const savedStatus = localStorage.getItem('dokira_last_user_type');
+        if (savedStatus) {
+            const savedOption = document.querySelector(`.status-option[data-user-type="${savedStatus}"]`);
+            if (savedOption) {
+                setActiveStatus(savedOption);
+            }
+        }
+        
+        // Sauvegarder quand un statut est sélectionné
+        statusOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const userType = this.getAttribute('data-user-type');
+                localStorage.setItem('dokira_last_user_type', userType);
+            });
+        });
+    }
+    
+    // ========== ANIMATIONS SPÉCIFIQUES ==========
+    
+    // Animation pour l'indicateur de statut
+    function animateStatusIndicator(option) {
+        const indicator = option.querySelector('.status-indicator');
+        if (indicator) {
+            indicator.style.transform = 'scale(1.5)';
+            indicator.style.transition = 'transform 0.3s ease';
+            
+            setTimeout(() => {
+                indicator.style.transform = 'scale(1)';
+            }, 300);
+        }
+    }
+    
+    // Appliquer l'animation au clic
+    if (statusOptions.length > 0) {
+        statusOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                animateStatusIndicator(this);
+            });
+        });
+    }
 });
